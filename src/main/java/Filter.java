@@ -1,3 +1,7 @@
+
+import java.io.File;
+
+
 public interface Filter {
-    void applyFilter();
+    void applyFilter(File videoFile);
 }
