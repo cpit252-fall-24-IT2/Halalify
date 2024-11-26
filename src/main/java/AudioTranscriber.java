@@ -1,3 +1,4 @@
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.speech.v1.*;
 import com.google.protobuf.ByteString;
 import java.io.FileInputStream;
@@ -7,7 +8,22 @@ import java.util.List;
 
 public class AudioTranscriber {
 
+    private static SpeechSettings speechSettings;
+
+    public static void configureGoogleCredentials(String credentialsPath) throws IOException {
+        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(credentialsPath));
+        speechSettings = SpeechSettings.newBuilder()
+                .setCredentialsProvider(() -> credentials)
+                .build();
+        System.out.println("Google Credentials configured successfully.");
+    }
+
     public static void transcribeAudio(String audioFilePath) throws IOException {
+
+        if (speechSettings == null) {
+            throw new IllegalStateException("Google Credentials not configured. Call configureGoogleCredentials first.");
+        }
+
         try (SpeechClient speechClient = SpeechClient.create()) {
             RecognitionConfig config = RecognitionConfig.newBuilder()
                     .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
