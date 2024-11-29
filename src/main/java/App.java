@@ -9,6 +9,9 @@ public class App {
             System.out.println("Media processing completed successfully!");
         } catch (IOException e) {
             System.err.println("An error occurred: " + e.getMessage());
+
         }
     }
+
+
 }

@@ -1,4 +1,14 @@
 # Default ignored files
 /shelf/
 /workspace.xml
-C:\Users\saadn\Documents\halalify-442817-b014fc4a0392.json
+
+.env
+*.properties
+*.txt
+*.json
+.idea/
+target/
+build/
+
+
+C:\Users\saadn\Downloads\ibm-credentials.env

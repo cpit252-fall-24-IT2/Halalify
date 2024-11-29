@@ -14,15 +14,16 @@ public class MediaProcessor {
             System.exit(1);
         }
 
-        String audioPath = "audio.wav";
+
+        String audioPath = "C:\\Users\\saadn\\Documents\\audio.wav";
         if (!AudioExtractor.extractAudio(videoFile.getAbsolutePath(), audioPath)) {
             System.err.println("Failed to extract audio from video. Exiting.");
             System.exit(1);
         }
 
         try {
-            String credentialsPath = "C:\\Users\\saadn\\Documents\\halalify-442817-b014fc4a0392.json";
-            AudioTranscriber.configureGoogleCredentials(credentialsPath);
+            String credentialsPath = "C:\\Users\\saadn\\Downloads\\ibm-credentials.env";
+            AudioTranscriber.configureIBMCredentials(credentialsPath);
 
             AudioTranscriber.transcribeAudio(audioPath);
             System.out.println("Filter applied successfully.");

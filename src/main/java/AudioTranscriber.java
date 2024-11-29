@@ -1,59 +1,73 @@
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.speech.v1.*;
-import com.google.protobuf.ByteString;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.List;
+import com.ibm.cloud.sdk.core.security.IamAuthenticator;
+import com.ibm.watson.speech_to_text.v1.SpeechToText;
+import com.ibm.watson.speech_to_text.v1.model.RecognizeOptions;
+import com.ibm.watson.speech_to_text.v1.model.SpeechRecognitionAlternative;
+import com.ibm.watson.speech_to_text.v1.model.SpeechRecognitionResult;
+import com.ibm.watson.speech_to_text.v1.model.SpeechRecognitionResults;
 
+import java.io.*;
+import java.util.List;
+import java.util.Properties;
 
 public class AudioTranscriber {
 
-    private static SpeechSettings speechSettings;
+    private static SpeechToText speechToText;
 
-    public static void configureGoogleCredentials(String credentialsPath) throws IOException {
-        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(credentialsPath));
-        speechSettings = SpeechSettings.newBuilder()
-                .setCredentialsProvider(() -> credentials)
-                .build();
-        System.out.println("Google Credentials configured successfully.");
+    public static void configureIBMCredentials(String credentialsFilePath) throws IOException {
+        // Load API key and URL from .env file
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream(credentialsFilePath)) {
+            properties.load(fis);
+        }
+
+        String apiKey = properties.getProperty("SPEECH_TO_TEXT_APIKEY");
+        String serviceUrl = properties.getProperty("SPEECH_TO_TEXT_URL");
+
+        if (apiKey == null || serviceUrl == null) {
+            throw new IllegalStateException("IBM API key or service URL is missing in the credentials file.");
+        }
+
+        // Configure Speech-to-Text client with the IamAuthenticator
+        IamAuthenticator authenticator = new IamAuthenticator(apiKey);
+        speechToText = new SpeechToText(authenticator);
+        speechToText.setServiceUrl(serviceUrl);
+
+        System.out.println("IBM Watson Speech-to-Text credentials configured successfully from credentials file.");
     }
 
     public static void transcribeAudio(String audioFilePath) throws IOException {
-
-        if (speechSettings == null) {
-            throw new IllegalStateException("Google Credentials not configured. Call configureGoogleCredentials first.");
+        if (speechToText == null) {
+            throw new IllegalStateException("IBM Watson Speech-to-Text not configured. Call configureIBMCredentials first.");
         }
 
-        try (SpeechClient speechClient = SpeechClient.create()) {
-            RecognitionConfig config = RecognitionConfig.newBuilder()
-                    .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-                    .setSampleRateHertz(16000)
-                    .setLanguageCode("en-US")
-                    .setEnableWordTimeOffsets(true)
-                    .build();
+        File audioFile = new File(audioFilePath);
+        if (!audioFile.exists()) {
+            throw new IllegalArgumentException("Audio file does not exist: " + audioFilePath);
+        }
 
-            RecognitionAudio audio = RecognitionAudio.newBuilder()
-                    .setContent(ByteString.readFrom(new FileInputStream(audioFilePath)))
-                    .build();
+        // Build recognition options
+        RecognizeOptions options = new RecognizeOptions.Builder()
+                .audio(audioFile)
+                .contentType("audio/wav") // Ensure your file is in the correct format
+                .model("en-US_BroadbandModel")
+                .timestamps(true)
+                .build();
 
-            List<SpeechRecognitionResult> results = speechClient.recognize(config, audio).getResultsList();
+        // Perform transcription
+        SpeechRecognitionResults results = speechToText.recognize(options).execute().getResult();
 
-            for (SpeechRecognitionResult result : results) {
-                for (SpeechRecognitionAlternative alternative : result.getAlternativesList()) {
-                    System.out.printf("Transcription: %s%n", alternative.getTranscript());
-                    for (WordInfo wordInfo : alternative.getWordsList()) {
-                        String word = wordInfo.getWord();
-                        System.out.printf("Word: %s, Start: %s, End: %s%n", word,
-                                wordInfo.getStartTime().getSeconds(),
-                                wordInfo.getEndTime().getSeconds());
-
-                        if (isProfane(word)) {
-                            System.out.printf("Profanity detected at: %s seconds%n", wordInfo.getStartTime().getSeconds());
-                        }
-                    }
+        // Create or overwrite the output text file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("transcription.txt"))) {
+            for (SpeechRecognitionResult result : results.getResults()) {
+                for (SpeechRecognitionAlternative alternative : result.getAlternatives()) {
+                    String transcription = alternative.getTranscript();
+                    writer.write(transcription);
+                    writer.newLine(); // Add a new line for readability
                 }
             }
         }
+
+        System.out.println("Transcription saved to transcription.txt");
     }
 
     private static boolean isProfane(String word) {
