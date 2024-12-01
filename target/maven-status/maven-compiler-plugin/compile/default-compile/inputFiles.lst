@@ -1,9 +1,10 @@
-C:\Users\saadn\Halalify\src\main\java\App.java
-C:\Users\saadn\Halalify\src\main\java\AudioExtractor.java
-C:\Users\saadn\Halalify\src\main\java\AudioTranscriber.java
-C:\Users\saadn\Halalify\src\main\java\BeepFilter.java
 C:\Users\saadn\Halalify\src\main\java\Filter.java
 C:\Users\saadn\Halalify\src\main\java\FilterFactory.java
-C:\Users\saadn\Halalify\src\main\java\MediaProcessor.java
-C:\Users\saadn\Halalify\src\main\java\MuteFilter.java
 C:\Users\saadn\Halalify\src\main\java\VideoProcessor.java
+C:\Users\saadn\Halalify\src\main\java\App.java
+C:\Users\saadn\Halalify\src\main\java\MuteFilter.java
+C:\Users\saadn\Halalify\src\main\java\GUI.java
+C:\Users\saadn\Halalify\src\main\java\MediaProcessor.java
+C:\Users\saadn\Halalify\src\main\java\BeepFilter.java
+C:\Users\saadn\Halalify\src\main\java\AudioExtractor.java
+C:\Users\saadn\Halalify\src\main\java\AudioTranscriber.java

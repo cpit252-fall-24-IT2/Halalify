@@ -1,0 +1,10 @@
+AudioTranscriber.class
+Filter.class
+MuteFilter.class
+MediaProcessor.class
+AudioExtractor.class
+App.class
+VideoProcessor.class
+FilterFactory.class
+BeepFilter.class
+GUI.class

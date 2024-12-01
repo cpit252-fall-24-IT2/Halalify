@@ -1,3 +1,5 @@
+package media;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io .*;
@@ -5,7 +7,7 @@ import java.io .*;
 public class AudioExtractor {
     public static boolean extractAudio(String videoFilePath, String audioFilePath) {
         ProcessBuilder processBuilder = new ProcessBuilder(
-                "C:\\Users\\saadn\\Downloads\\ffmpeg\\ffmpeg-2024-11-25-git-04ce01df0b-essentials_build\\bin\\ffmpeg.exe", // Path to ffmpeg executable
+                "C:\\Users\\saadn\\Downloads\\ffmpeg\\ffmpeg-2024-11-25-git-04ce01df0b-essentials_build\\bin\\ffmpeg.exe", // Path to ffmpeg.exe
                 "-y", // Overwrite output files without asking
                 "-i", videoFilePath, // Input file
                 "-vn", // Disable video
@@ -46,4 +48,3 @@ public class AudioExtractor {
         }
     }
 }
-
