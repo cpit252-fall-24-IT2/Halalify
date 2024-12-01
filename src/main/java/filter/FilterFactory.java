@@ -1,5 +1,6 @@
-package filter;//This is the Factory method design pattern, we made this to give two options to the user.
+package filter;
 
+//This is the Factory method design pattern, we made this to give two options to the user.
 public class FilterFactory {
     public static Filter getFilter(String filterType) {
         switch (filterType) {

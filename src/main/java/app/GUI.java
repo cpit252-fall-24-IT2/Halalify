@@ -47,10 +47,10 @@ public class GUI extends Application {
         });
 
         Button muteButton = new Button("Mute Bad Words");
-        muteButton.setOnAction(e -> processMedia("mute", statusLabel));
+        muteButton.setOnAction(e -> processMedia("MUTE", statusLabel));
 
         Button beepButton = new Button("Beep Bad Words");
-        beepButton.setOnAction(e -> processMedia("beep", statusLabel));
+        beepButton.setOnAction(e -> processMedia("BEEP", statusLabel));
 
         VBox layout = new VBox(10);
         layout.getChildren().addAll(selectFileButton, muteButton, beepButton, statusLabel);

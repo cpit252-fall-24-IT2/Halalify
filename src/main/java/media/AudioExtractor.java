@@ -12,7 +12,7 @@ public class AudioExtractor {
                 "-i", videoFilePath, // Input file
                 "-vn", // Disable video
                 "-acodec", "pcm_s16le", // Audio codec
-                "-ar", "16000", // Sample rate
+                "-ar", "48000", // Sample rate
                 "-ac", "1", // Mono channel
                 audioFilePath // Output audio file
         );
