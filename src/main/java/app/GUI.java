@@ -1,6 +1,7 @@
 package app;
 
 import javafx.application.Application;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
@@ -13,6 +14,7 @@ import java.io.File;
 public class GUI extends Application {
 
     private File selectedFile;
+    private File outputDirectory; // To store the selected output directory
     private String ffmpegPath; // Store the selected FFmpeg path
     private final MediaProcessor mediaProcessor = new MediaProcessor();
 
@@ -21,6 +23,7 @@ public class GUI extends Application {
         primaryStage.setTitle("Video Profanity Processor");
 
         Label statusLabel = new Label("Please select a video file to process.");
+
         Button selectFileButton = new Button("Select Video");
         selectFileButton.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
@@ -64,6 +67,21 @@ public class GUI extends Application {
             }
         });
 
+        Button setOutputDirectoryButton = new Button("Set Output Directory");
+        setOutputDirectoryButton.setOnAction(e -> {
+            DirectoryChooser directoryChooser = new DirectoryChooser();
+            directoryChooser.setTitle("Select Output Directory");
+            File directory = directoryChooser.showDialog(primaryStage);
+            if (directory != null) {
+                outputDirectory = directory;
+                statusLabel.setText("Output directory set to: " + outputDirectory.getAbsolutePath());
+                System.out.println("Output directory set to: " + outputDirectory.getAbsolutePath());
+            } else {
+                statusLabel.setText("No output directory selected.");
+                System.out.println("No output directory selected.");
+            }
+        });
+
         Button muteButton = new Button("Mute Bad Words");
         muteButton.setOnAction(e -> processMedia("MUTE", statusLabel));
 
@@ -71,9 +89,16 @@ public class GUI extends Application {
         beepButton.setOnAction(e -> processMedia("BEEP", statusLabel));
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(selectFileButton, setFfmpegPathButton, muteButton, beepButton, statusLabel);
+        layout.getChildren().addAll(
+                selectFileButton,
+                setFfmpegPathButton,
+                setOutputDirectoryButton, // Add this button to the layout
+                muteButton,
+                beepButton,
+                statusLabel
+        );
 
-        Scene scene = new Scene(layout, 400, 250);
+        Scene scene = new Scene(layout, 400, 300);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -83,17 +108,24 @@ public class GUI extends Application {
             statusLabel.setText("Please set the FFmpeg path first.");
             return;
         }
-        if (selectedFile != null) {
-            statusLabel.setText("Processing: " + action + " bad words in " + selectedFile.getName());
-            try {
-                mediaProcessor.setFfmpegPath(ffmpegPath); // Pass the FFmpeg path to the media processor
-                mediaProcessor.processMedia(selectedFile, action);
-                statusLabel.setText("Processing completed successfully.");
-            } catch (Exception e) {
-                statusLabel.setText("Error: " + e.getMessage());
-            }
-        } else {
+        if (selectedFile == null) {
             statusLabel.setText("Please select a video file first.");
+            return;
+        }
+        if (outputDirectory == null) {
+            statusLabel.setText("Please select an output directory first.");
+            return;
+        }
+
+        File outputFile = new File(outputDirectory, "processed_" + selectedFile.getName());
+        statusLabel.setText("Processing: " + action + " bad words in " + selectedFile.getName());
+        try {
+            mediaProcessor.setFfmpegPath(ffmpegPath); // Pass the FFmpeg path to the media processor
+            mediaProcessor.setVideoOutputPath(outputFile.getAbsolutePath()); // Set the output path
+            mediaProcessor.processMedia(selectedFile, action);
+            statusLabel.setText("Processing completed successfully. Output saved to: " + outputFile.getAbsolutePath());
+        } catch (Exception e) {
+            statusLabel.setText("Error: " + e.getMessage());
         }
     }
 }

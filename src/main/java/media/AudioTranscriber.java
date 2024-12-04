@@ -56,7 +56,8 @@ public class AudioTranscriber {
         // Perform transcription
         SpeechRecognitionResults results = speechToText.recognize(options).execute().getResult();
 
-        String outputPath = "C:\\Users\\saadn\\Documents\\transcription.txt"; // Replace with your desired path
+        //Bad smell
+        String outputPath = "C:\\Users\\saad-\\Documents\\transcription.txt"; // Replace with your desired path
 
         List<Double> badWordTimestamps = new ArrayList<>();
 
@@ -93,7 +94,7 @@ public class AudioTranscriber {
     }
 
     private static boolean isProfane(String word) {
-        List<String> profanities = List.of("subscribe", "badword2"); // Add actual offensive words here
+        List<String> profanities = List.of("presentation", "project"); // Add actual offensive words here
         return profanities.contains(word.toLowerCase());
     }
 }
