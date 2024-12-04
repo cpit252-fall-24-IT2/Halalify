@@ -10,7 +10,22 @@ import static media.VideoAudioMerger.merge;
 
 public class MediaProcessor {
 
+    private String ffmpegPath;
+
+    public void setFfmpegPath(String ffmpegPath) throws Exception {
+        File file = new File(ffmpegPath);
+        if (!file.exists() || !file.isFile() || !file.getName().equalsIgnoreCase("ffmpeg.exe")) {
+            throw new Exception("Invalid FFmpeg path. Please select the correct FFmpeg executable.");
+        }
+        this.ffmpegPath = ffmpegPath;
+    }
+
+
     public void processMedia(File videoFile, String action) throws Exception {
+        if (ffmpegPath == null || ffmpegPath.isEmpty()) {
+            throw new Exception("FFmpeg path is not set.");
+        }
+
         String audioPath = "C:\\Users\\saadn\\Documents\\audio.wav";
         String modifiedAudioPath = "C:\\Users\\saadn\\Documents\\modified_audio.wav";
         String outputVideoPath = "C:\\Users\\saadn\\Documents\\output_video.mp4";

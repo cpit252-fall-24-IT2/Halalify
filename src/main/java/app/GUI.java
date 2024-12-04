@@ -13,6 +13,7 @@ import java.io.File;
 public class GUI extends Application {
 
     private File selectedFile;
+    private String ffmpegPath; // Store the selected FFmpeg path
     private final MediaProcessor mediaProcessor = new MediaProcessor();
 
     @Override
@@ -42,7 +43,24 @@ public class GUI extends Application {
                 System.out.println("Video selected: " + selectedFile.getAbsolutePath());
             } else {
                 System.out.println("No video selected.");
+            }
+        });
 
+        Button setFfmpegPathButton = new Button("Set FFmpeg Path");
+        setFfmpegPathButton.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select FFmpeg Executable");
+            fileChooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("Executable Files", "*.exe")
+            );
+            File file = fileChooser.showOpenDialog(primaryStage);
+            if (file != null) {
+                ffmpegPath = file.getAbsolutePath();
+                statusLabel.setText("FFmpeg Path Set: " + ffmpegPath);
+                System.out.println("FFmpeg Path Set: " + ffmpegPath);
+            } else {
+                statusLabel.setText("No FFmpeg path selected.");
+                System.out.println("No FFmpeg path selected.");
             }
         });
 
@@ -53,17 +71,22 @@ public class GUI extends Application {
         beepButton.setOnAction(e -> processMedia("BEEP", statusLabel));
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(selectFileButton, muteButton, beepButton, statusLabel);
+        layout.getChildren().addAll(selectFileButton, setFfmpegPathButton, muteButton, beepButton, statusLabel);
 
-        Scene scene = new Scene(layout, 400, 200);
+        Scene scene = new Scene(layout, 400, 250);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
     private void processMedia(String action, Label statusLabel) {
+        if (ffmpegPath == null || ffmpegPath.isEmpty()) {
+            statusLabel.setText("Please set the FFmpeg path first.");
+            return;
+        }
         if (selectedFile != null) {
             statusLabel.setText("Processing: " + action + " bad words in " + selectedFile.getName());
             try {
+                mediaProcessor.setFfmpegPath(ffmpegPath); // Pass the FFmpeg path to the media processor
                 mediaProcessor.processMedia(selectedFile, action);
                 statusLabel.setText("Processing completed successfully.");
             } catch (Exception e) {
