@@ -9,7 +9,7 @@ public class BeepFilter implements Filter {
     private final String beepFilePath = "C:\\Users\\saadn\\Downloads\\y2mate.com - BEEP Beep sound effect.wav";
 
     @Override
-    public void apply(String inputAudioFile, String outputAudioFile, List<Double> profanityTimestamps) throws Exception {
+    public void apply(String inputAudioFile, String outputAudioFile, List<Double> badWordTimestamps) throws Exception {
         // Load input audio
         File inputFile = new File(inputAudioFile);
         AudioInputStream inputAudioStream = AudioSystem.getAudioInputStream(inputFile);
@@ -24,7 +24,7 @@ public class BeepFilter implements Filter {
         byte[] beepAudioBytes = normalizedBeepStream.readAllBytes();
 
         // Overlay beep sound at profanity timestamps
-        byte[] processedAudioBytes = addBeep(inputAudioBytes, beepAudioBytes, profanityTimestamps, inputAudioStream.getFormat());
+        byte[] processedAudioBytes = addBeep(inputAudioBytes, beepAudioBytes, badWordTimestamps, inputAudioStream.getFormat());
 
         // Write processed audio to output file
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(processedAudioBytes);

@@ -1,45 +1,66 @@
 package filter;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.sound.sampled.*;
+import java.io.*;
 import java.util.List;
 
 public class MuteFilter implements Filter {
 
     @Override
-    public void apply(String inputAudioPath, String outputAudioPath, List<Double> badWordTimestamps) throws IOException {
-        String ffmpegPath = "C:\\Users\\saadn\\Downloads\\ffmpeg\\ffmpeg-2024-11-25-git-04ce01df0b-essentials_build\\bin\\ffmpeg.exe";
+    public void apply(String inputAudioFile, String outputAudioFile, List<Double> badWordTimestamps) throws Exception {
+        // Load the input audio file
+        File inputFile = new File(inputAudioFile);
+        AudioInputStream inputAudioStream = AudioSystem.getAudioInputStream(inputFile);
 
-        // Create a filter_complex string to mute sections
-        StringBuilder filterComplex = new StringBuilder();
-        for (double timestamp : badWordTimestamps) {
-            filterComplex.append(String.format(
-                    "volume=enable='between(t,%f,%f)':volume=0,", timestamp, timestamp + 1
-            ));
-        }
-        String filter = filterComplex.toString();
+        // Convert the input audio stream to a byte array
+        byte[] inputAudioBytes = inputAudioStream.readAllBytes();
+        AudioFormat format = inputAudioStream.getFormat();
 
-        // Construct the FFmpeg command
-        String[] command = {
-                ffmpegPath,
-                "-i", inputAudioPath,
-                "-af", filter.substring(0, filter.length() - 1), // Remove trailing comma
-                outputAudioPath
-        };
+        // Apply muting to the specified sections
+        byte[] processedAudioBytes = muteSections(inputAudioBytes, badWordTimestamps, format);
 
-        // Execute FFmpeg command
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.redirectErrorStream(true);
-        Process process = processBuilder.start();
+        // Write the processed audio to the output file
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(processedAudioBytes);
+        AudioInputStream processedAudioStream = new AudioInputStream(byteArrayInputStream, format, processedAudioBytes.length / format.getFrameSize());
+        File outputFile = new File(outputAudioFile);
+        AudioSystem.write(processedAudioStream, AudioFileFormat.Type.WAVE, outputFile);
 
-        try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
+        System.out.println("MuteFilter applied successfully. Output file: " + outputAudioFile);
+    }
+
+    /**
+     * Mutes specified sections in the audio by replacing bytes with zero.
+     *
+     * @param inputAudioBytes Byte array of the input audio
+     * @param timestamps List of timestamps (in seconds) where muting should occur
+     * @param format Audio format of the input audio
+     * @return Byte array of the processed audio with muted sections
+     */
+    private byte[] muteSections(byte[] inputAudioBytes, List<Double> timestamps, AudioFormat format) {
+        int frameSize = format.getFrameSize();
+        float frameRate = format.getFrameRate();
+
+        // Process each timestamp to calculate the byte range for muting
+        for (double timestamp : timestamps) {
+            int startByte = (int) (timestamp * frameRate) * frameSize;
+            int muteDurationFrames = (int) frameRate; // Assuming muting for 1 second
+            int endByte = startByte + muteDurationFrames * frameSize;
+
+            // Ensure we don't go out of bounds
+            if (startByte >= inputAudioBytes.length) {
+                System.out.println("Timestamp " + timestamp + " is beyond the audio length. Skipping.");
+                continue;
             }
-        } catch (Exception e) {
-            throw new IOException("Error applying mute filter: " + e.getMessage(), e);
+            if (endByte > inputAudioBytes.length) {
+                endByte = inputAudioBytes.length;
+            }
+
+            // Replace bytes with zero for the mute range
+            for (int i = startByte; i < endByte; i++) {
+                inputAudioBytes[i] = 0;
+            }
         }
+
+        return inputAudioBytes;
     }
 }

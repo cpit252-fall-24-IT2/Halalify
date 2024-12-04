@@ -60,20 +60,20 @@ public class AudioTranscriber {
 
         List<Double> badWordTimestamps = new ArrayList<>();
 
-        // Create or overwrite the output text file
-//        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
-//            for (SpeechRecognitionResult result : results.getResults()) {
-//                for (SpeechRecognitionAlternative alternative : result.getAlternatives()) {
-//                    String transcription = alternative.getTranscript();
-//                    writer.write(transcription);
-//                    writer.newLine();
-//                    // Check each word for profanity and collect timestamps
-//                    badWordTimestamps.addAll(getProfanityTimestamps(alternative.getTimestamps()));
-//                }
-//            }
-//        }
-//
-//        System.out.println("Transcription saved to transcription.txt");
+        // Create the output text file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
+            for (SpeechRecognitionResult result : results.getResults()) {
+                for (SpeechRecognitionAlternative alternative : result.getAlternatives()) {
+                    String transcription = alternative.getTranscript();
+                    writer.write(transcription);
+                    writer.newLine();
+                    // Check each word for profanity and collect timestamps
+                    badWordTimestamps.addAll(getProfanityTimestamps(alternative.getTimestamps()));
+                }
+            }
+        }
+
+        System.out.println("Transcription saved to transcription.txt");
         return badWordTimestamps;
     }
 
