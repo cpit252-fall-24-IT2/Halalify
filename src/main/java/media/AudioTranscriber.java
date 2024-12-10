@@ -3,18 +3,15 @@ package media;
 import com.ibm.cloud.sdk.core.security.IamAuthenticator;
 import com.ibm.watson.speech_to_text.v1.SpeechToText;
 import com.ibm.watson.speech_to_text.v1.model.*;
-
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class AudioTranscriber {
 
     private static SpeechToText speechToText;
+    private static final Set<String> PROFANITIES = Set.of("subscribe", "wrong"); // Add more words as needed
 
     public static void configureIBMCredentials(String credentialsFilePath) throws IOException {
-        // Load API key and URL from .env file
         Properties properties = new Properties();
         try (FileInputStream fis = new FileInputStream(credentialsFilePath)) {
             properties.load(fis);
@@ -27,25 +24,39 @@ public class AudioTranscriber {
             throw new IllegalStateException("IBM API key or service URL is missing in the credentials file.");
         }
 
-        // Configure Speech-to-Text client with the IamAuthenticator
         IamAuthenticator authenticator = new IamAuthenticator(apiKey);
         speechToText = new SpeechToText(authenticator);
         speechToText.setServiceUrl(serviceUrl);
 
-        System.out.println("IBM Watson Speech-to-Text credentials configured successfully from credentials file.");
+        System.out.println("IBM Watson Speech-to-Text credentials configured successfully.");
     }
 
     public static List<Double> transcribeAudio(String audioFilePath) throws IOException {
+        validateSetup();
+        File audioFile = validateAudioFile(audioFilePath);
+
+        // Perform transcription
+        SpeechRecognitionResults results = transcribe(audioFile);
+
+        // Detect bad words
+        return detectProfanity(results);
+    }
+
+    private static void validateSetup() {
         if (speechToText == null) {
             throw new IllegalStateException("IBM Watson Speech-to-Text not configured. Call configureIBMCredentials first.");
         }
+    }
 
+    private static File validateAudioFile(String audioFilePath) {
         File audioFile = new File(audioFilePath);
         if (!audioFile.exists()) {
             throw new IllegalArgumentException("Audio file does not exist: " + audioFilePath);
         }
+        return audioFile;
+    }
 
-        // Build recognition options with timestamps enabled
+    private static SpeechRecognitionResults transcribe(File audioFile) throws FileNotFoundException {
         RecognizeOptions options = new RecognizeOptions.Builder()
                 .audio(audioFile)
                 .contentType("audio/wav") // Ensure your file is in the correct format
@@ -53,28 +64,17 @@ public class AudioTranscriber {
                 .timestamps(true) // Enable timestamps for words
                 .build();
 
-        // Perform transcription
-        SpeechRecognitionResults results = speechToText.recognize(options).execute().getResult();
+        return speechToText.recognize(options).execute().getResult();
+    }
 
-        //Bad smell
-        String outputPath = "C:\\Users\\saad-\\Documents\\transcription.txt"; // Replace with your desired path
-
+    private static List<Double> detectProfanity(SpeechRecognitionResults results) {
         List<Double> badWordTimestamps = new ArrayList<>();
 
-        // Create the output text file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
-            for (SpeechRecognitionResult result : results.getResults()) {
-                for (SpeechRecognitionAlternative alternative : result.getAlternatives()) {
-                    String transcription = alternative.getTranscript();
-                    writer.write(transcription);
-                    writer.newLine();
-                    // Check each word for profanity and collect timestamps
-                    badWordTimestamps.addAll(getProfanityTimestamps(alternative.getTimestamps()));
-                }
+        for (SpeechRecognitionResult result : results.getResults()) {
+            for (SpeechRecognitionAlternative alternative : result.getAlternatives()) {
+                badWordTimestamps.addAll(getProfanityTimestamps(alternative.getTimestamps()));
             }
         }
-
-        System.out.println("Transcription saved to transcription.txt");
         return badWordTimestamps;
     }
 
@@ -82,19 +82,15 @@ public class AudioTranscriber {
         List<Double> badWordTimestamps = new ArrayList<>();
         for (SpeechTimestamp timestamp : timestamps) {
             String word = timestamp.getWord();
-            double startTimeInSeconds = timestamp.getStartTime();
-
-            // Check for profanity
             if (isProfane(word)) {
-                System.out.printf("Profanity detected: '%s' at %.2f seconds%n", word, startTimeInSeconds);
-                badWordTimestamps.add(startTimeInSeconds);
+                System.out.printf("Profanity detected: '%s' at %.2f seconds%n", word, timestamp.getStartTime());
+                badWordTimestamps.add(timestamp.getStartTime());
             }
         }
         return badWordTimestamps;
     }
 
     private static boolean isProfane(String word) {
-        List<String> profanities = List.of("presentation", "project"); // Add actual offensive words here
-        return profanities.contains(word.toLowerCase());
+        return PROFANITIES.contains(word.toLowerCase());
     }
 }

@@ -5,7 +5,7 @@ public class FilterFactory {
     public static Filter getFilter(String filterType) {
         switch (filterType) {
             case "MUTE": return new MuteFilter();
-            case "BEEP": return new BeepFilter();
+            case "BLEEP": return new BleepFilter();
             default: throw new IllegalArgumentException("Unknown filter type.");
         }
     }

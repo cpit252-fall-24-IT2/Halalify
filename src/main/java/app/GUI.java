@@ -8,14 +8,13 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import media.MediaProcessor;
-
 import java.io.File;
 
 public class GUI extends Application {
 
     private File selectedFile;
-    private File outputDirectory; // To store the selected output directory
-    private String ffmpegPath; // Store the selected FFmpeg path
+    private File outputDirectory;
+    private String ffmpegPath;
     private final MediaProcessor mediaProcessor = new MediaProcessor();
 
     @Override
@@ -24,108 +23,103 @@ public class GUI extends Application {
 
         Label statusLabel = new Label("Please select a video file to process.");
 
-        Button selectFileButton = new Button("Select Video");
-        selectFileButton.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Select Video File");
-            fileChooser.getExtensionFilters().addAll(
-                    new FileChooser.ExtensionFilter("Video Files", "*.mp4", "*.mkv", "*.avi", "*.mov")
-            );
-            File file = fileChooser.showOpenDialog(primaryStage);
-            if (file != null) {
-                selectedFile = file;
-                statusLabel.setText("Selected file: " + file.getName());
-            } else {
-                statusLabel.setText("No file selected.");
-            }
-            if (selectedFile != null) {
-                final long MAX_SIZE = 1073741824L; // 1GB
-                if (selectedFile.length() > MAX_SIZE) {
-                    System.err.println("File size is above the 1GB limit. Please choose a smaller file.");
-                }
-                System.out.println("Video selected: " + selectedFile.getAbsolutePath());
-            } else {
-                System.out.println("No video selected.");
-            }
-        });
-
-        Button setFfmpegPathButton = new Button("Set FFmpeg Path");
-        setFfmpegPathButton.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Select FFmpeg Executable");
-            fileChooser.getExtensionFilters().add(
-                    new FileChooser.ExtensionFilter("Executable Files", "*.exe")
-            );
-            File file = fileChooser.showOpenDialog(primaryStage);
-            if (file != null) {
-                ffmpegPath = file.getAbsolutePath();
-                statusLabel.setText("FFmpeg Path Set: " + ffmpegPath);
-                System.out.println("FFmpeg Path Set: " + ffmpegPath);
-            } else {
-                statusLabel.setText("No FFmpeg path selected.");
-                System.out.println("No FFmpeg path selected.");
-            }
-        });
-
-        Button setOutputDirectoryButton = new Button("Set Output Directory");
-        setOutputDirectoryButton.setOnAction(e -> {
-            DirectoryChooser directoryChooser = new DirectoryChooser();
-            directoryChooser.setTitle("Select Output Directory");
-            File directory = directoryChooser.showDialog(primaryStage);
-            if (directory != null) {
-                outputDirectory = directory;
-                statusLabel.setText("Output directory set to: " + outputDirectory.getAbsolutePath());
-                System.out.println("Output directory set to: " + outputDirectory.getAbsolutePath());
-            } else {
-                statusLabel.setText("No output directory selected.");
-                System.out.println("No output directory selected.");
-            }
-        });
-
-        Button muteButton = new Button("Mute Bad Words");
-        muteButton.setOnAction(e -> processMedia("MUTE", statusLabel));
-
-        Button beepButton = new Button("Beep Bad Words");
-        beepButton.setOnAction(e -> processMedia("BEEP", statusLabel));
-
-        VBox layout = new VBox(10);
-        layout.getChildren().addAll(
-                selectFileButton,
-                setFfmpegPathButton,
-                setOutputDirectoryButton, // Add this button to the layout
-                muteButton,
-                beepButton,
-                statusLabel
+        // Create buttons
+        Button selectFileButton = createFileButton(
+                "Select Video",
+                "Select Video File",
+                file -> {
+                    selectedFile = file;  // Store the selected file
+                    updateStatus(statusLabel, "Selected file: " + file.getName()); // Update UI
+                },
+                "*.mp4", "*.mkv", "*.avi", "*.mov"
         );
 
-        Scene scene = new Scene(layout, 400, 300);
+
+        Button setFfmpegPathButton = createFileButton(
+                "Set FFmpeg Path",
+                "Select FFmpeg Executable",
+                file -> {
+                    ffmpegPath = file.getAbsolutePath();
+                    updateStatus(statusLabel, "FFmpeg Path Set: " + ffmpegPath);
+                },
+                "*.exe"
+                );
+
+        Button setOutputDirectoryButton = createDirectoryButton("Set Output Directory", directory -> {
+            outputDirectory = directory;
+            updateStatus(statusLabel, "Output directory set to: " + directory.getAbsolutePath());
+        });
+
+        Button muteButton = createProcessingButton("Mute Bad Words", "MUTE", statusLabel);
+        Button beepButton = createProcessingButton("Bleep Bad Words", "BLEEP", statusLabel);
+
+        // Layout
+        VBox layout = new VBox(10, selectFileButton, setFfmpegPathButton, setOutputDirectoryButton, muteButton, beepButton, statusLabel);
+
+        Scene scene = new Scene(layout, 400, 400);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
+    private Button createFileButton(String buttonText, String dialogTitle, FileHandler handler, String... extensions) {
+        Button button = new Button(buttonText);
+        button.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle(dialogTitle);
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Supported Files", extensions));
+            File file = fileChooser.showOpenDialog(null);
+            if (file != null) handler.handle(file);
+        });
+        return button;
+    }
+
+
+    private Button createDirectoryButton(String buttonText, DirectoryHandler handler) {
+        Button button = new Button(buttonText);
+        button.setOnAction(e -> {
+            DirectoryChooser directoryChooser = new DirectoryChooser();
+            directoryChooser.setTitle("Select Directory");
+            File directory = directoryChooser.showDialog(null);
+            if (directory != null) handler.handle(directory);
+        });
+        return button;
+    }
+
+    private Button createProcessingButton(String buttonText, String action, Label statusLabel) {
+        Button button = new Button(buttonText);
+        button.setOnAction(e -> processMedia(action, statusLabel));
+        return button;
+    }
+
     private void processMedia(String action, Label statusLabel) {
-        if (ffmpegPath == null || ffmpegPath.isEmpty()) {
-            statusLabel.setText("Please set the FFmpeg path first.");
-            return;
-        }
-        if (selectedFile == null) {
-            statusLabel.setText("Please select a video file first.");
-            return;
-        }
-        if (outputDirectory == null) {
-            statusLabel.setText("Please select an output directory first.");
+        if (ffmpegPath == null || selectedFile == null || outputDirectory == null) {
+            updateStatus(statusLabel, "Ensure FFmpeg, video file, and output directory are set.");
             return;
         }
 
-        File outputFile = new File(outputDirectory, "processed_" + selectedFile.getName());
-        statusLabel.setText("Processing: " + action + " bad words in " + selectedFile.getName());
+        updateStatus(statusLabel, "Processing: " + action + " bad words in " + selectedFile.getName());
         try {
-            mediaProcessor.setFfmpegPath(ffmpegPath); // Pass the FFmpeg path to the media processor
-            mediaProcessor.setVideoOutputPath(outputFile.getAbsolutePath()); // Set the output path
+            mediaProcessor.setFfmpegPath(ffmpegPath);
+            mediaProcessor.setVideoOutputPath(outputDirectory);
             mediaProcessor.processMedia(selectedFile, action);
-            statusLabel.setText("Processing completed successfully. Output saved to: " + outputFile.getAbsolutePath());
+            updateStatus(statusLabel, "Processing completed. Output saved to: " + new File(outputDirectory, "processed_" + selectedFile.getName()).getAbsolutePath());
         } catch (Exception e) {
-            statusLabel.setText("Error: " + e.getMessage());
+            updateStatus(statusLabel, "Error: " + e.getMessage());
         }
+    }
+
+    private void updateStatus(Label statusLabel, String message) {
+        statusLabel.setText(message);
+        System.out.println(message);
+    }
+
+    @FunctionalInterface
+    interface FileHandler {
+        void handle(File file);
+    }
+
+    @FunctionalInterface
+    interface DirectoryHandler {
+        void handle(File directory);
     }
 }

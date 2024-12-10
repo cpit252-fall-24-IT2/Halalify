@@ -20,7 +20,7 @@ public class VideoAudioMerger {
 
             // Check if the process completed successfully
             if (exitCode == 0) {
-                System.out.println("Audio and video merged successfully: " + outputVideoPath);
+                System.out.println("Audio and video merged successfully.");
                 return true;
             } else {
                 System.err.println("Error merging audio and video. Exit code: " + exitCode);

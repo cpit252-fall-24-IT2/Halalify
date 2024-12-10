@@ -11,56 +11,79 @@ public class MuteFilter implements Filter {
         // Load the input audio file
         File inputFile = new File(inputAudioFile);
         AudioInputStream inputAudioStream = AudioSystem.getAudioInputStream(inputFile);
-
-        // Convert the input audio stream to a byte array
-        byte[] inputAudioBytes = inputAudioStream.readAllBytes();
         AudioFormat format = inputAudioStream.getFormat();
 
-        // Apply muting to the specified sections
-        byte[] processedAudioBytes = muteSections(inputAudioBytes, badWordTimestamps, format);
+        // Create output file and AudioOutputStream
+        File outputFile = new File(outputAudioFile);
+        AudioInputStream processedAudioStream = processAudio(inputAudioStream, badWordTimestamps, format);
 
         // Write the processed audio to the output file
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(processedAudioBytes);
-        AudioInputStream processedAudioStream = new AudioInputStream(byteArrayInputStream, format, processedAudioBytes.length / format.getFrameSize());
-        File outputFile = new File(outputAudioFile);
         AudioSystem.write(processedAudioStream, AudioFileFormat.Type.WAVE, outputFile);
 
         System.out.println("MuteFilter applied successfully. Output file: " + outputAudioFile);
     }
 
     /**
-     * Mutes specified sections in the audio by replacing bytes with zero.
+     * Processes the audio and mutes the specified sections without loading the entire file into memory.
      *
-     * @param inputAudioBytes Byte array of the input audio
+     * @param inputAudioStream Input audio stream
      * @param timestamps List of timestamps (in seconds) where muting should occur
      * @param format Audio format of the input audio
-     * @return Byte array of the processed audio with muted sections
+     * @return An AudioInputStream containing the processed audio
+     * @throws IOException If an I/O error occurs
      */
-    private byte[] muteSections(byte[] inputAudioBytes, List<Double> timestamps, AudioFormat format) {
+    private AudioInputStream processAudio(AudioInputStream inputAudioStream, List<Double> timestamps, AudioFormat format) throws IOException {
+        // Sort timestamps to process them in order
+        timestamps.sort(Double::compareTo);
+
         int frameSize = format.getFrameSize();
         float frameRate = format.getFrameRate();
+        long totalFrames = inputAudioStream.getFrameLength();
 
-        // Process each timestamp to calculate the byte range for muting
+        // Create a new AudioInputStream for the output
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        AudioInputStream outputAudioStream = new AudioInputStream(
+                new ByteArrayInputStream(byteArrayOutputStream.toByteArray()),
+                format,
+                totalFrames
+        );
+
+        byte[] buffer = new byte[frameSize];
+        long frameIndex = 0;
+        long muteStartFrame = -1;
+        long muteEndFrame = -1;
+
+        // Iterate through the input audio and process each frame
         for (double timestamp : timestamps) {
-            int startByte = (int) (timestamp * frameRate) * frameSize;
-            int muteDurationFrames = (int) frameRate; // Assuming muting for 1 second
-            int endByte = startByte + muteDurationFrames * frameSize;
+            muteStartFrame = (long) (timestamp * frameRate);
+            muteEndFrame = muteStartFrame + (long) frameRate; // Assuming 1-second mute duration
 
-            // Ensure we don't go out of bounds
-            if (startByte >= inputAudioBytes.length) {
-                System.out.println("Timestamp " + timestamp + " is beyond the audio length. Skipping.");
-                continue;
-            }
-            if (endByte > inputAudioBytes.length) {
-                endByte = inputAudioBytes.length;
+            // Process frames before mute region
+            while (frameIndex < muteStartFrame) {
+                int bytesRead = inputAudioStream.read(buffer);
+                if (bytesRead == -1) break;
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+                frameIndex++;
             }
 
-            // Replace bytes with zero for the mute range
-            for (int i = startByte; i < endByte; i++) {
-                inputAudioBytes[i] = 0;
+            // Write mute region (zeros)
+            while (frameIndex >= muteStartFrame && frameIndex < muteEndFrame && frameIndex < totalFrames) {
+                byteArrayOutputStream.write(new byte[frameSize]); // Write zero bytes
+                inputAudioStream.skip(frameSize); // Skip frames in the input
+                frameIndex++;
             }
         }
 
-        return inputAudioBytes;
+        // Process remaining frames after the last mute region
+        int bytesRead;
+        while ((bytesRead = inputAudioStream.read(buffer)) != -1) {
+            byteArrayOutputStream.write(buffer, 0, bytesRead);
+            frameIndex++;
+        }
+
+        // Create the final output audio stream
+        byte[] processedAudioBytes = byteArrayOutputStream.toByteArray();
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(processedAudioBytes);
+        return new AudioInputStream(byteArrayInputStream, format, processedAudioBytes.length / format.getFrameSize());
     }
 }
