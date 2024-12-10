@@ -11,6 +11,8 @@ After running App.java:
 
 -Select the path to the ffmpeg.exe file.
 
+-Select the output directory.
+
 -Select the desired video.
 
 -Select Mute or Beep.
