@@ -7,12 +7,12 @@ Halalify is an innovative app designed to automatically detect and censor offens
 
 -Download JavaFX: https://download2.gluonhq.com/openjfx/23.0.1/openjfx-23.0.1_windows-x64_bin-sdk.zip
 
-After running App.java:
+After running:
+
+-Select the desired video.
 
 -Select the path to the ffmpeg.exe file.
 
 -Select the output directory.
 
--Select the desired video.
-
--Select Mute or Beep.
+-Select Mute or Bleep.
