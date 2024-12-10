@@ -1,10 +1,12 @@
 app\GUI.class
-filter\BeepFilter.class
 filter\Filter.class
 filter\FilterFactory.class
 app\App.class
+app\GUI$FileHandler.class
 media\VideoAudioMerger.class
+app\GUI$DirectoryHandler.class
 filter\MuteFilter.class
+filter\BleepFilter.class
 media\AudioTranscriber.class
 media\MediaProcessor.class
 media\AudioExtractor.class

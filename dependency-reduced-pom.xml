@@ -7,6 +7,46 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.4.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <createDependencyReducedPom>true</createDependencyReducedPom>
+              <transformers>
+                <transformer>
+                  <mainClass>app.App</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <mainClass>app.App</mainClass>
+          <arguments>
+            <argument>--module-path</argument>
+            <argument>${javafx.module.path}</argument>
+            <argument>--add-modules</argument>
+            <argument>javafx.controls,javafx.fxml</argument>
+          </arguments>
+          <systemProperties>
+            <systemProperty>
+              <key>java.library.path</key>
+              <value>${java.library.path}</value>
+            </systemProperty>
+          </systemProperties>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.10.1</version>
         <configuration>
@@ -21,18 +61,6 @@
         <configuration>
           <mainClass>app.App</mainClass>
         </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.4.1</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
@@ -51,6 +79,7 @@
     </repository>
   </repositories>
   <properties>
+    <javafx.module.path>C:\Users\saadn\Downloads\javafx\javafx-sdk-23.0.1\lib</javafx.module.path>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.source>17</maven.compiler.source>
