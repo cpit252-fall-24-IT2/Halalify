@@ -21,9 +21,11 @@ After running:
 #Disclosure:
 
 -Use of Generative AI in Development
+
 The Halalify app's development involved the assistance of generative AI (genAI) to enhance productivity, improve code quality, and expedite problem-solving. Below, we outline how generative AI was used in the project:
 
 -Purpose of AI Assistance
+
 Generative AI was employed to:
 
 1. Design and refine specific Java classes, including filters for audio processing (e.g., BleepFilter, MuteFilter).
@@ -33,6 +35,7 @@ Generative AI was employed to:
 5. Iterate solutions based on observed behavior in the output, as described through prompts.
 
 -Example Prompts Used
+
 Here are some examples of prompts provided to the AI during the development process:
 
 1. Initial Class Design:
@@ -59,8 +62,10 @@ Here are some examples of prompts provided to the AI during the development proc
 "there's something wrong with the mute filter because the output just stops and the window says "not responding" then I have to terminate it manually."
 
 -Role of Human Oversight
+
 While generative AI provided valuable guidance and code suggestions, all AI-generated content was reviewed, tested, and adapted by the development team to ensure functionality, correctness, and alignment with project goals. The final implementation reflects a combination of AI-generated insights and human expertise.
 
 -Ethical Use of AI
+
 This project adheres to principles of transparency and ethical use of generative AI. By disclosing its role in the development process, we aim to provide full clarity regarding the use of AI in the Halalify app.
 
